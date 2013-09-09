@@ -1,0 +1,48 @@
+Copyright 2013 Bruce Ide
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+ 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+This is a redesign of the socket server class that can be found in a couple
+of my demos. I'm including boost signal callbacks for a number of socket
+events (connection request, service started, service complete, server
+shutdown, etc,) and a class you can use to get streams from a file
+descriptor. I'm also trying to make it easier to drop in a new server
+body without disrupting the rest of the code you've written to support it.
+It still feels very TCP/IP-flavored though, and I'm not sure there's much
+one can do about that in a socket-server type class.
+
+Usage:
+
+1) Write a service class that takes:
+   * fr::socket_server::server_interface * - Owner server of this service
+   * int fdes - file descriptor you'll be communicating on
+   * sockaddr_in * - Remote address for this connection (You can ignore)
+2) Your service class does it work in void operator()()
+   * You can do raw reads and writes to your fdes or use fdes_stream
+     to get iostreams (see echo server in test for details)
+3) Create a server with your service class as a template and 
+   port number as a parameter.
+   * fr::socket_server::socket_server<my_service> my_server(port);
+4) Go server.start()
+   * my_server.start()
+5) go server.join()
+   * my_server.join()
+6) Communicate with your server
+   echo "Hi there!" | nc 127.0.0.1 port
+
+If you want some fancy schmancy "Only listen on certain network interfaces,"
+you could modify socket_server to send server_body an an sockaddr_in to
+use instead of INADDR_ANY. I might do this at some point and pass
+INADDR_ANY as the default parameter so it doesn't break existing code.
+You just have to specify the local address of the network interface you want 
+to listen on.
